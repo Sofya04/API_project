@@ -165,5 +165,25 @@ public class UpdateContactsRA {
                 .assertThat().statusCode(400)
                 .assertThat().body("message.phone", containsString("Phone number must contain only digits!"));
     }
-
+    @Test
+    public void updateContactUnauthorized(){
+        ContactDto contact = ContactDto.builder()
+                .id(id)
+                .name("Irina")
+                .lastName("Sheyk")
+                .email("irina@hollywood.com")
+                .phone("98345875749")
+                .address("Los Angeles")
+                .description("Colleague").build();
+        given()
+                .header("Authorization","fkjdjfdkj")
+                .body(contact)
+                .contentType(ContentType.JSON)
+                .when()
+                .put("contacts")
+                .then()
+                .assertThat().statusCode(401)
+                .assertThat().body("message", containsString("JWT strings must contain exactly 2 period characters"));
+    }
+    
 }
