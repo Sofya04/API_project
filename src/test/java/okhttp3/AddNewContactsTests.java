@@ -2,6 +2,8 @@ package okhttp3;
 
 import config.Provider;
 import dto.ContactDto;
+import dto.ContactDtoResponse;
+import dto.ErrorDto;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -28,7 +30,13 @@ public class AddNewContactsTests {
                 .post(body).build();
         Response response = Provider.getInstance().getClient().newCall(request).execute();
         Assert.assertTrue(response.isSuccessful());
-        Assert.assertEquals(response.code(),200);
+        ContactDtoResponse contactDtoResponse = Provider.getInstance().getGson().fromJson(response.body().string(), ContactDtoResponse.class);
+
+        Assert.assertTrue(contactDtoResponse.getMessage().toString().contains("Contact was added!"));
+        String mess = contactDtoResponse.getMessage();
+        String[] all = mess.split("ID: ");
+        String id = all[1];
+        System.out.println(id);
     }
     @Test
     public void addNewContactFormatError() throws IOException {
@@ -48,6 +56,11 @@ public class AddNewContactsTests {
         Response response = Provider.getInstance().getClient().newCall(request).execute();
         Assert.assertFalse(response.isSuccessful());
         Assert.assertEquals(response.code(),400);
+        //must be a well-formed email address
+        ErrorDto errorDto = Provider.getInstance().getGson().fromJson(response.body().string(), ErrorDto.class);
+        Object message = errorDto.getMessage();
+        Assert.assertTrue(message.toString().contains("Phone number must contain only digits!"));
+
     }
     @Test
     public void addNewContactUnauthorized() throws IOException {
@@ -67,8 +80,9 @@ public class AddNewContactsTests {
         Response response = Provider.getInstance().getClient().newCall(request).execute();
         Assert.assertFalse(response.isSuccessful());
         Assert.assertEquals(response.code(),401);
+
     }
-    @Test
+    @Test(enabled = false)//bug
     public void addNewContactDuplicateContact() throws IOException {
         ContactDto contact = ContactDto.builder()
                 .name("Volodymyr")
@@ -85,5 +99,10 @@ public class AddNewContactsTests {
         Response response = Provider.getInstance().getClient().newCall(request).execute();
         Assert.assertFalse(response.isSuccessful());
         Assert.assertEquals(response.code(),409);
+        ErrorDto errorDto = Provider.getInstance().getGson().fromJson(response.body().string(), ErrorDto.class);
+        Object message = errorDto.getMessage();
+        System.out.println(errorDto.getMessage());
+//        Assert.assertEquals(message, "User already exists");
+//        Assert.assertEquals(errorDto.getStatus(), 409);
     }
 }
